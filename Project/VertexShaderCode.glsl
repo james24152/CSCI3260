@@ -7,11 +7,12 @@ in layout(location=2) vec3 normal;
 uniform mat4 modelTransformMatrix;
 uniform mat4 projectionMatrix;
 uniform vec3 ambientLight;
+uniform float ka;
 
 out vec3 theColor;
 out vec2 UV;
-//out vec3 normalWorld;
-//out vec3 vertexPositionWorld; //use for calculating light pos and vertex vector
+out vec3 normalWorld;
+out vec3 vertexPositionWorld; //use for calculating light pos and vertex vector
 
 void main()
 {
@@ -20,10 +21,10 @@ void main()
 	vec4 projectedPosition = projectionMatrix * new_position;
 	gl_Position = projectedPosition;
 
-	//vec4 normal_temp = modelTransformMatrix * vec4(normal, 0);
-	//normalWorld = normal_temp.xyz;
-	//vertexPositionWorld = new_position.xyz;
-	theColor = vec3(1.0, 0.0, 0.0);
-	//theColor = ambientLight;
+	vec4 normal_temp = modelTransformMatrix * vec4(normal, 0);
+	normalWorld = normal_temp.xyz;
+	vertexPositionWorld = new_position.xyz;
+	float tempka = clamp(ka, 0.0, 1.0);
+	theColor = ambientLight * tempka;
 	UV = uv;
 }

@@ -53,6 +53,7 @@ glm::vec3 SC_local_pos = glm::vec3(0.0f, 0.0f, 0.0f);
 glm::vec3 Camera_local_position = glm::vec3(5.0f, 5.0f, 5.0f);
 float kd = 1.0;
 float ks = 1.0;
+float ka = 0.0;
 int textureNum = 0;
 float angle = 0.0;
 float x_pos = 0.0;
@@ -61,6 +62,7 @@ int forwards = 0;
 int spin = 0;
 float SC_spinAngle = -110.0f;
 float Cam_spinAngle = 25.0f;
+float planetSpinAngle = 0.0f;
 glm::vec2 mousePosition = glm::vec2(256.0,256.0);
 float oldx = 256.0;
 float roll = 0.0;
@@ -181,6 +183,24 @@ int installShaders(char* vertexShader, char* fragmentShader)
 
 void keyboard(unsigned char key, int x, int y)
 {
+	if (key == 'q') {
+		kd -= 0.1;
+	}
+	if (key == 'w') {
+		kd += 0.1;
+	}
+	if (key == 'z') {
+		ks -= 0.1;
+	}
+	if (key == 'x') {
+		ks += 0.1;
+	}
+	if (key == 'a') {
+		ka -= 0.1;
+	}
+	if (key == 's') {
+		ka += 0.1;
+	}
 }
 
 void move(int key, int x, int y) 
@@ -225,7 +245,8 @@ void PassiveMouse(int x, int y)
 		Cam_Rot_M = glm::rotate(glm::mat4(1.0f), glm::radians(Cam_spinAngle), glm::vec3(0.0f, 1.0f, 0.0f));
 		Cam_Pt_Rot_M = glm::rotate(glm::mat4(1.0f), glm::radians(Cam_spinAngle + 45), glm::vec3(0.0f, 1.0f, 0.0f));
 	}
-	oldx = x;
+	oldx = x;
+
 
 }
 
@@ -811,7 +832,6 @@ void UpdateStatus() {
 		glm::mat4(1.0f),
 		glm::vec3(SC_trans_M[3].x, SC_trans_M[3].y, SC_trans_M[3].z)
 	);
-	glm::vec3 asdf = glm::vec3(0.0f, 0.0f, -100.0f);
 	//printf("%f, %f, %f, %f\n", Camera_trans_M[3].x, Camera_trans_M[3].y, Camera_trans_M[3].z, Camera_trans_M[3].w);
 	SC_TransformMatrix = SC_trans_M*SC_Rot_M*SC_scale_M;
 	Camera_TransformMatrix = Camera_trans_M2*Cam_Rot_M*Camera_trans_M1;
@@ -889,28 +909,20 @@ void paintGL(void)
 	glUniformMatrix4fv(projectionMatrixUniformLocation, 1, GL_FALSE, &combinedMatrix[0][0]); //set projection view
 
 	GLint ambientLightUniformLocation = glGetUniformLocation(programID, "ambientLight"); //ambient light
-	vec3 ambientLight(0.1f, 0.1f, 0.1f);
+	vec3 ambientLight(1.0f, 1.0f, 1.0f);
 	glUniform3fv(ambientLightUniformLocation, 1, &ambientLight[0]);
 
 	GLint lightPositionUniformLocation = glGetUniformLocation(programID, "lightPositionWorld"); //diffuse light
 	vec3 lightPosition;
-	float atten;
-	if (textureNum == 2) {
-		atten = 1.0;
-		lightPosition = vec3(x_pos, y_pos, -45.0f);
-		GLint attenLocation = glGetUniformLocation(programID, "attenuation");
-		glUniform1f(attenLocation, atten);
-	}
-	else {
-		atten = 0.0;
-		lightPosition = vec3(20.0f, 0.0f, -40.0f);
-		GLint attenLocation = glGetUniformLocation(programID, "attenuation");
-		glUniform1f(attenLocation, atten);
-	}
+	//float atten;
+	//atten = 0.0;
+	lightPosition = vec3(60.0f, 0.0f, 60.0f);
+	//GLint attenLocation = glGetUniformLocation(programID, "attenuation");
+	//glUniform1f(attenLocation, atten);
 	glUniform3fv(lightPositionUniformLocation, 1, &lightPosition[0]);
 
 	GLint eyePositionUniformLocation = glGetUniformLocation(programID, "eyePositionWorld");
-	vec3 eyePosition(0.0f, 0.0f, 0.0f);
+	vec3 eyePosition = vec3(Camera_world_position);
 	glUniform3fv(eyePositionUniformLocation, 1, &eyePosition[0]);
 
 	GLint kdLocation = glGetUniformLocation(programID, "kd");
@@ -918,6 +930,9 @@ void paintGL(void)
 
 	GLint ksLocation = glGetUniformLocation(programID, "ks");
 	glUniform1f(ksLocation, ks);
+
+	GLint kaLocation = glGetUniformLocation(programID, "ka");
+	glUniform1f(kaLocation, ka);
 
 	glm::mat4 modelTransformMatrix = glm::mat4(1.0f);
 	glm::mat4 rotationMatrix = glm::mat4(1.0f);
@@ -968,8 +983,9 @@ void paintGL(void)
 	translationMatrix = glm::translate(glm::mat4(),
 		glm::vec3(0.0f, 0.0f, 0.0f));;
 	rotationMatrix = glm::rotate(mat4(), 1.57f, vec3(1, 0, 0));
+	rotationMatrix2 = glm::rotate(mat4(), glm::radians(planetSpinAngle), vec3(0, 1, 0));
 	scaleMatrix = glm::scale(glm::mat4(), glm::vec3(0.25f, 0.25f, 0.25f));
-	modelTransformMatrix = translationMatrix * rotationMatrix * scaleMatrix;
+	modelTransformMatrix = translationMatrix * scaleMatrix * rotationMatrix2 * rotationMatrix;
 	glUniformMatrix4fv(modelTransformMatrixUniformLocation, 1,
 		GL_FALSE, &modelTransformMatrix[0][0]);
 	glDrawArrays(GL_TRIANGLES, 0, drawSize2);
@@ -984,8 +1000,9 @@ void paintGL(void)
 	translationMatrix = glm::translate(glm::mat4(),
 		glm::vec3(0.0f, 0.0f, -30.0f));;
 	rotationMatrix = glm::rotate(mat4(), 1.57f, vec3(1, 0, 0));
+	rotationMatrix2 = glm::rotate(mat4(), glm::radians(planetSpinAngle), vec3(0, 1, 0));
 	scaleMatrix = glm::scale(glm::mat4(), glm::vec3(0.25f, 0.25f, 0.25f));
-	modelTransformMatrix = translationMatrix * rotationMatrix * scaleMatrix;
+	modelTransformMatrix = translationMatrix * scaleMatrix * rotationMatrix2 * rotationMatrix;
 	glUniformMatrix4fv(modelTransformMatrixUniformLocation, 1,
 		GL_FALSE, &modelTransformMatrix[0][0]);
 	glDrawArrays(GL_TRIANGLES, 0, drawSize3);
@@ -1000,8 +1017,9 @@ void paintGL(void)
 	translationMatrix = glm::translate(glm::mat4(),
 		glm::vec3(0.0f, 0.0f, -60.0f));;
 	rotationMatrix = glm::rotate(mat4(), 1.57f, vec3(1, 0, 0));
+	rotationMatrix2 = glm::rotate(mat4(), glm::radians(planetSpinAngle), vec3(0, 1, 0));
 	scaleMatrix = glm::scale(glm::mat4(), glm::vec3(0.25f, 0.25f, 0.25f));
-	modelTransformMatrix = translationMatrix * rotationMatrix * scaleMatrix;
+	modelTransformMatrix = translationMatrix * scaleMatrix * rotationMatrix2 * rotationMatrix;
 	glUniformMatrix4fv(modelTransformMatrixUniformLocation, 1,
 		GL_FALSE, &modelTransformMatrix[0][0]);
 	glDrawArrays(GL_TRIANGLES, 0, drawSize4);
@@ -1016,12 +1034,13 @@ void paintGL(void)
 	
 	translationMatrix = glm::translate(glm::mat4(),
 		glm::vec3(0.0f, 0.0f, -150.0f));;
-	rotationMatrix = glm::rotate(mat4(), 1.57f, vec3(1, 0, 0));
+	rotationMatrix2 = glm::rotate(mat4(), glm::radians(planetSpinAngle), vec3(0, 1, 0));
 	scaleMatrix = glm::scale(glm::mat4(), glm::vec3(15.0f, 15.0f, 15.0f));
-	modelTransformMatrix = translationMatrix * scaleMatrix;
+	modelTransformMatrix = translationMatrix * rotationMatrix2 * scaleMatrix;
 	glUniformMatrix4fv(modelTransformMatrixUniformLocation, 1,
 		GL_FALSE, &modelTransformMatrix[0][0]);
 	glDrawArrays(GL_TRIANGLES, 0, drawSize5);
+	planetSpinAngle += 0.005f;
 	
 	glFlush();
 	glutPostRedisplay();
