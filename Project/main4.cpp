@@ -35,6 +35,7 @@ GLuint texture2;
 GLuint texture3;
 GLuint texture4;
 GLuint textureSky; //bind with texture5
+GLuint texture6;
 glm::vec3 SCTranslation = glm::vec3(0.0f, 0.0f, 0.0f);
 glm::vec4 SC_world_Front_Direction;
 glm::vec4 SC_world_Right_Direction;
@@ -51,9 +52,9 @@ glm::vec3 SC_local_front = glm::vec3(0.0f, 0.0f, -1.0f);
 glm::vec3 SC_local_right = glm::vec3(1.0f, 0.0f, 0.0f);
 glm::vec3 SC_local_pos = glm::vec3(0.0f, 0.0f, 0.0f);
 glm::vec3 Camera_local_position = glm::vec3(5.0f, 5.0f, 5.0f);
-float kd = 1.0;
+float kd = 0.3;
 float ks = 1.0;
-float ka = 0.0;
+float ka = 1.0;
 int textureNum = 0;
 float angle = 0.0;
 float x_pos = 0.0;
@@ -540,6 +541,7 @@ void sendDataToOpenGL()
 	texture2 = loadBMP_custom("theme2.bmp");
 	texture3 = loadBMP_custom("theme3.bmp");
 	texture4 = loadBMP_custom("block_texture.bmp");
+	texture6 = loadBMP_custom("Green.bmp");
 	glGenVertexArrays(5, vao);
 	GLuint vbo[15];
 	glGenBuffers(15, vbo);
@@ -960,9 +962,16 @@ void paintGL(void)
 	glBindVertexArray(vao[0]);
 	
 	GLuint TextureID = glGetUniformLocation(programID, "myTextureSampler"); //texture handling
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, texture);
-	glUniform1i(TextureID, 0);
+	if ((glm::distance(glm::vec3(SC_world_pos), glm::vec3(0.0f, 0.0f, 0.0f)) < 5.0f) || (glm::distance(glm::vec3(SC_world_pos), glm::vec3(0.0f, 0.0f, -30.0f)) < 5.0f) || (glm::distance(glm::vec3(SC_world_pos), glm::vec3(0.0f, 0.0f, -60.0f)) < 5.0f)) {
+		glActiveTexture(GL_TEXTURE6);
+		glBindTexture(GL_TEXTURE_2D, texture6);
+		glUniform1i(TextureID, 6);
+	}
+	else {
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, texture);
+		glUniform1i(TextureID, 0);
+	}
 	
 
 	UpdateStatus();//update the transform matrix of space craft
@@ -976,9 +985,16 @@ void paintGL(void)
 	glBindVertexArray(vao[1]);
 
 	GLuint TextureID1 = glGetUniformLocation(programID, "myTextureSampler"); //texture handling
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, texture0);
-	glUniform1i(TextureID1, 1);
+	if (glm::distance(glm::vec3(SC_world_pos), glm::vec3(0.0f, 0.0f, 0.0f)) < 5.0f) {
+		glActiveTexture(GL_TEXTURE6);
+		glBindTexture(GL_TEXTURE_2D, texture6);
+		glUniform1i(TextureID1, 6);
+	}
+	else {
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, texture0);
+		glUniform1i(TextureID1, 1);
+	}
 
 	translationMatrix = glm::translate(glm::mat4(),
 		glm::vec3(0.0f, 0.0f, 0.0f));;
@@ -993,9 +1009,16 @@ void paintGL(void)
 	glBindVertexArray(vao[2]);
 
 	GLuint TextureID2 = glGetUniformLocation(programID, "myTextureSampler"); //texture handling
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, texture0);
-	glUniform1i(TextureID2, 1);
+	if (glm::distance(glm::vec3(SC_world_pos), glm::vec3(0.0f, 0.0f, -30.0f)) < 5.0f) {
+		glActiveTexture(GL_TEXTURE6);
+		glBindTexture(GL_TEXTURE_2D, texture6);
+		glUniform1i(TextureID2, 6);
+	}
+	else {
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, texture0);
+		glUniform1i(TextureID2, 1);
+	}
 
 	translationMatrix = glm::translate(glm::mat4(),
 		glm::vec3(0.0f, 0.0f, -30.0f));;
@@ -1010,9 +1033,16 @@ void paintGL(void)
 	glBindVertexArray(vao[3]);
 
 	GLuint TextureID3 = glGetUniformLocation(programID, "myTextureSampler"); //texture handling
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, texture0);
-	glUniform1i(TextureID3, 1);
+	if (glm::distance(glm::vec3(SC_world_pos), glm::vec3(0.0f, 0.0f, -60.0f)) < 5.0f) {
+		glActiveTexture(GL_TEXTURE6);
+		glBindTexture(GL_TEXTURE_2D, texture6);
+		glUniform1i(TextureID3, 6);
+	}
+	else {
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, texture0);
+		glUniform1i(TextureID3, 1);
+	}
 
 	translationMatrix = glm::translate(glm::mat4(),
 		glm::vec3(0.0f, 0.0f, -60.0f));;

@@ -33,6 +33,6 @@ void main()
 	
 	//daColor = vec4(texture( myTextureSampler, UV ).rgb, 1.0);
 	//daColor = vec4(theColor,1.0) * realColor;
-	daColor =  vec4(theColor,1.0) + realColor * diffuse + specularLight;
+	daColor =  vec4(theColor,1.0) * realColor + diffuse + specularLight;
 	//daColor = vec4(theColor,1.0) + vec4(1.0,0.0,0.0,1.0) * diffuse + specularLight;
 }
