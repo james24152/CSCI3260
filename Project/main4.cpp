@@ -20,7 +20,7 @@ using glm::vec3;
 using glm::mat4;
 
 GLint programID, skyboxProgram;
-GLuint vao[5];
+GLuint vao[7];
 GLuint vaoSkybox;
 GLsizei drawSize;
 GLsizei drawSize2;
@@ -1151,7 +1151,7 @@ void paintGL(void)
 
 	glUniformMatrix4fv(modelTransformMatrixUniformLocation, 1,
 		GL_FALSE, &SC_TransformMatrix[0][0]);
-	if ((glm::distance(glm::vec3(SC_world_pos), glm::vec3(0.0f, 0.0f, -150.0f)) > 40.0f)) {
+	if ((glm::distance(glm::vec3(SC_world_pos), glm::vec3(0.0f, 0.0f, -150.0f)) > 40.0f) && (glm::distance(glm::vec3(SC_world_pos), glm::vec3(0.0f, 0.0f, -150.0f)) > 40.0f)) {
 		glDrawArrays(GL_TRIANGLES, 0, drawSize);
 	}
 
@@ -1252,11 +1252,13 @@ void paintGL(void)
 	glUniformMatrix4fv(modelTransformMatrixUniformLocation, 1,
 		GL_FALSE, &modelTransformMatrix[0][0]);
 	glDrawArrays(GL_TRIANGLES, 0, drawSize5);
-	planetSpinAngle += 0.005f;
+	planetSpinAngle += 0.6f;
 
-
+	
 	//drawing wonder planet
 	glBindVertexArray(vao[5]);
+	normalmap = 0.0f;
+	glUniform1f(normalMapInt, normalmap);
 	GLuint TextureID6 = glGetUniformLocation(programID, "myTextureSampler");
 	glActiveTexture(GL_TEXTURE8);
 	glBindTexture(GL_TEXTURE_2D, textureT1);
@@ -1268,7 +1270,7 @@ void paintGL(void)
 	rotationyMatrix = glm::rotate(mat4(), 1.57f, vec3(0.0f, 1.0f, 0.0f));
 	rotationzMatrix = glm::rotate(mat4(), 1.57f, vec3(0.0f, 0.0f, 1.0f));
 	rotationStepMatrix = glm::rotate(mat4(), angleWP*0.01745f, vec3(0.0f, 0.0f, 1.0f));
-	angleWP = angleWP - 0.05f;
+	angleWP = angleWP - 0.6f;
 	modelTransformMatrix = translationMatrix * rotationxMatrix*rotationStepMatrix*scaleMatrix;
 	//modelTransformMatrixUniformLocation = glGetUniformLocation(programID, "modelTransformMatrix");
 	glUniformMatrix4fv(modelTransformMatrixUniformLocation, 1, GL_FALSE, &modelTransformMatrix[0][0]);
@@ -1295,7 +1297,6 @@ void paintGL(void)
 		glUniformMatrix4fv(modelTransformMatrixUniformLocation, 1, GL_FALSE, &modelTransformMatrix[0][0]);
 		glDrawArrays(GL_TRIANGLES, 0, drawSizeRock);
 	}
-
 
 
 
