@@ -7,9 +7,12 @@ in layout(location=2) vec3 normal;
 uniform mat4 modelTransformMatrix;
 uniform mat4 projectionMatrix;
 uniform vec3 ambientLight;
+uniform vec3 ambientLight1;
 uniform float ka;
+uniform float ka1;
 
 out vec3 theColor;
+out vec3 theColor1;
 out vec2 UV;
 out vec3 normalWorld;
 out vec3 vertexPositionWorld; //use for calculating light pos and vertex vector
@@ -25,6 +28,8 @@ void main()
 	normalWorld = normal_temp.xyz;
 	vertexPositionWorld = new_position.xyz;
 	float tempka = clamp(ka, 0.0, 1.0);
+	float tempka1 = clamp(ka1, 0.0, 1.0);
 	theColor = ambientLight * tempka;
+	theColor1 = ambientLight1 * tempka1;
 	UV = uv;
 }

@@ -55,6 +55,9 @@ glm::vec3 Camera_local_position = glm::vec3(5.0f, 5.0f, 5.0f);
 float kd = 0.3;
 float ks = 1.0;
 float ka = 1.0;
+float kd1 = 0.0;
+float ks1 = 0.0;
+float ka1 = 0.0;
 int textureNum = 0;
 float angle = 0.0;
 float x_pos = 0.0;
@@ -201,6 +204,25 @@ void keyboard(unsigned char key, int x, int y)
 	}
 	if (key == 's') {
 		ka += 0.1;
+	}
+	//second light source
+	if (key == 'o') {
+		kd1 -= 0.1;
+	}
+	if (key == 'p') {
+		kd1 += 0.1;
+	}
+	if (key == 'n') {
+		ks1 -= 0.1;
+	}
+	if (key == 'm') {
+		ks1 += 0.1;
+	}
+	if (key == 'k') {
+		ka1 -= 0.1;
+	}
+	if (key == 'l') {
+		ka1 += 0.1;
 	}
 }
 
@@ -910,18 +932,28 @@ void paintGL(void)
 	GLint projectionMatrixUniformLocation = glGetUniformLocation(programID, "projectionMatrix");
 	glUniformMatrix4fv(projectionMatrixUniformLocation, 1, GL_FALSE, &combinedMatrix[0][0]); //set projection view
 
+	//first light source
 	GLint ambientLightUniformLocation = glGetUniformLocation(programID, "ambientLight"); //ambient light
 	vec3 ambientLight(1.0f, 1.0f, 1.0f);
 	glUniform3fv(ambientLightUniformLocation, 1, &ambientLight[0]);
+	//second light source
+	GLint ambientLight1UniformLocation = glGetUniformLocation(programID, "ambientLight1"); //ambient light
+	vec3 ambientLight1(1.0f, 0.0f, 0.0f);//red
+	glUniform3fv(ambientLight1UniformLocation, 1, &ambientLight1[0]);
 
+
+	//first light source
 	GLint lightPositionUniformLocation = glGetUniformLocation(programID, "lightPositionWorld"); //diffuse light
 	vec3 lightPosition;
-	//float atten;
-	//atten = 0.0;
 	lightPosition = vec3(60.0f, 0.0f, 60.0f);
-	//GLint attenLocation = glGetUniformLocation(programID, "attenuation");
-	//glUniform1f(attenLocation, atten);
 	glUniform3fv(lightPositionUniformLocation, 1, &lightPosition[0]);
+	
+	//second light source
+	GLint lightPositionUniformLocation1 = glGetUniformLocation(programID, "lightPositionWorld1"); //diffuse light
+	vec3 lightPosition1;
+	lightPosition1 = vec3(-40.0f, 0.0f, 0.0f);
+	glUniform3fv(lightPositionUniformLocation1, 1, &lightPosition1[0]);
+
 
 	GLint eyePositionUniformLocation = glGetUniformLocation(programID, "eyePositionWorld");
 	vec3 eyePosition = vec3(Camera_world_position);
@@ -935,6 +967,15 @@ void paintGL(void)
 
 	GLint kaLocation = glGetUniformLocation(programID, "ka");
 	glUniform1f(kaLocation, ka);
+
+	GLint kd1Location = glGetUniformLocation(programID, "kd1");
+	glUniform1f(kd1Location, kd1);
+
+	GLint ks1Location = glGetUniformLocation(programID, "ks1");
+	glUniform1f(ks1Location, ks1);
+
+	GLint ka1Location = glGetUniformLocation(programID, "ka1");
+	glUniform1f(ka1Location, ka1);
 
 	glm::mat4 modelTransformMatrix = glm::mat4(1.0f);
 	glm::mat4 rotationMatrix = glm::mat4(1.0f);
@@ -962,7 +1003,7 @@ void paintGL(void)
 	glBindVertexArray(vao[0]);
 	
 	GLuint TextureID = glGetUniformLocation(programID, "myTextureSampler"); //texture handling
-	if ((glm::distance(glm::vec3(SC_world_pos), glm::vec3(0.0f, 0.0f, 0.0f)) < 5.0f) || (glm::distance(glm::vec3(SC_world_pos), glm::vec3(0.0f, 0.0f, -30.0f)) < 5.0f) || (glm::distance(glm::vec3(SC_world_pos), glm::vec3(0.0f, 0.0f, -60.0f)) < 5.0f)) {
+	if ((glm::distance(glm::vec3(SC_world_pos), glm::vec3(0.0f, 0.0f, 0.0f)) < 10.0f) || (glm::distance(glm::vec3(SC_world_pos), glm::vec3(0.0f, 0.0f, -30.0f)) < 10.0f) || (glm::distance(glm::vec3(SC_world_pos), glm::vec3(0.0f, 0.0f, -60.0f)) < 10.0f)) {
 		glActiveTexture(GL_TEXTURE6);
 		glBindTexture(GL_TEXTURE_2D, texture6);
 		glUniform1i(TextureID, 6);
@@ -985,7 +1026,7 @@ void paintGL(void)
 	glBindVertexArray(vao[1]);
 
 	GLuint TextureID1 = glGetUniformLocation(programID, "myTextureSampler"); //texture handling
-	if (glm::distance(glm::vec3(SC_world_pos), glm::vec3(0.0f, 0.0f, 0.0f)) < 5.0f) {
+	if (glm::distance(glm::vec3(SC_world_pos), glm::vec3(0.0f, 0.0f, 0.0f)) < 10.0f) {
 		glActiveTexture(GL_TEXTURE6);
 		glBindTexture(GL_TEXTURE_2D, texture6);
 		glUniform1i(TextureID1, 6);
@@ -1009,7 +1050,7 @@ void paintGL(void)
 	glBindVertexArray(vao[2]);
 
 	GLuint TextureID2 = glGetUniformLocation(programID, "myTextureSampler"); //texture handling
-	if (glm::distance(glm::vec3(SC_world_pos), glm::vec3(0.0f, 0.0f, -30.0f)) < 5.0f) {
+	if (glm::distance(glm::vec3(SC_world_pos), glm::vec3(0.0f, 0.0f, -30.0f)) < 10.0f) {
 		glActiveTexture(GL_TEXTURE6);
 		glBindTexture(GL_TEXTURE_2D, texture6);
 		glUniform1i(TextureID2, 6);
@@ -1033,7 +1074,7 @@ void paintGL(void)
 	glBindVertexArray(vao[3]);
 
 	GLuint TextureID3 = glGetUniformLocation(programID, "myTextureSampler"); //texture handling
-	if (glm::distance(glm::vec3(SC_world_pos), glm::vec3(0.0f, 0.0f, -60.0f)) < 5.0f) {
+	if (glm::distance(glm::vec3(SC_world_pos), glm::vec3(0.0f, 0.0f, -60.0f)) < 10.0f) {
 		glActiveTexture(GL_TEXTURE6);
 		glBindTexture(GL_TEXTURE_2D, texture6);
 		glUniform1i(TextureID3, 6);
