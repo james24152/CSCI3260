@@ -31,7 +31,7 @@ GLsizei drawSizeSkyBox;
 GLuint texture;
 GLuint texture0;
 GLuint texture1;
-GLuint texture2;
+GLuint texture2; //for earth normal mapping
 GLuint texture3;
 GLuint texture4;
 GLuint textureSky; //bind with texture5
@@ -560,7 +560,7 @@ void sendDataToOpenGL()
 	texture = loadBMP_custom("texture/spacecraftTexture.bmp");
 	texture0 = loadBMP_custom("texture/ringTexture.bmp");
 	texture1 = loadBMP_custom("texture/earthTexture.bmp");
-	texture2 = loadBMP_custom("theme2.bmp");
+	texture2 = loadBMP_custom("texture/earth_normal.bmp");
 	texture3 = loadBMP_custom("theme3.bmp");
 	texture4 = loadBMP_custom("block_texture.bmp");
 	texture6 = loadBMP_custom("Green.bmp");
@@ -995,6 +995,9 @@ void paintGL(void)
 
 	GLint modelTransformMatrixUniformLocation =
 		glGetUniformLocation(programID, "modelTransformMatrix"); //get location of transform matrix
+	GLint normalMapInt = glGetUniformLocation(programID, "normalMap");
+	float normalmap = 0.0f;
+	glUniform1f(normalMapInt, normalmap);
 	//TODO:
 	//Set lighting information, such as position and color of lighting source
 	//Set transformation matrix
@@ -1019,7 +1022,9 @@ void paintGL(void)
 	
 	glUniformMatrix4fv(modelTransformMatrixUniformLocation, 1,
 		GL_FALSE, &SC_TransformMatrix[0][0]);
-	glDrawArrays(GL_TRIANGLES, 0, drawSize);
+	if ((glm::distance(glm::vec3(SC_world_pos), glm::vec3(0.0f, 0.0f, -150.0f)) > 40.0f)) {
+		glDrawArrays(GL_TRIANGLES, 0, drawSize);
+	}
 
 
 	//draw for first ring vao[1]
@@ -1102,6 +1107,13 @@ void paintGL(void)
 	glActiveTexture(GL_TEXTURE2);
 	glBindTexture(GL_TEXTURE_2D, texture1);
 	glUniform1i(TextureID4, 2);
+
+	normalmap = 1.0f;
+	glUniform1f(normalMapInt, normalmap);
+	GLuint TextureID5 = glGetUniformLocation(programID, "myTextureSampler1"); //texture handling
+	glActiveTexture(GL_TEXTURE3);
+	glBindTexture(GL_TEXTURE_2D, texture2);
+	glUniform1i(TextureID5, 3);
 	
 	translationMatrix = glm::translate(glm::mat4(),
 		glm::vec3(0.0f, 0.0f, -150.0f));;

@@ -8,6 +8,7 @@ in vec3 normalWorld;
 in vec3 vertexPositionWorld;
 
 uniform sampler2D myTextureSampler;
+uniform sampler2D myTextureSampler1;
 uniform vec3 lightPositionWorld;
 uniform vec3 lightPositionWorld1;
 uniform vec3 eyePositionWorld;
@@ -15,23 +16,34 @@ uniform float kd;
 uniform float kd1;
 uniform float ks;
 uniform float ks1;
+uniform float normalMap;
 
 void main()
 {
+	//for normal mapping
+	vec3 normal = normalize(normalWorld);
+	if(normalMap == 1.0) {
+		normal = texture( myTextureSampler1, UV ).rgb;
+		normal = normalize(normal * 2.0 - 1.0);
+	}
+
 	vec3 lightVectorWorld = normalize(lightPositionWorld - vertexPositionWorld);
-	float brightness = dot(lightVectorWorld, normalize(normalWorld));
+	//float brightness = dot(lightVectorWorld, normalize(normalWorld));
+	float brightness = dot(lightVectorWorld, normal);
 	brightness = clamp(brightness, 0.0, 1.0);
 	float kdtemp = clamp(kd, 0.0, 1.0);
 	vec4 diffuse = brightness * kdtemp * vec4(1.0f,1.0f,1.0f,1.0f);
 
 	//second light diffuse
 	vec3 lightVectorWorld1 = normalize(lightPositionWorld1 - vertexPositionWorld);
-	float brightness1 = dot(lightVectorWorld1, normalize(normalWorld));
+	//float brightness1 = dot(lightVectorWorld1, normalize(normalWorld));
+	float brightness1 = dot(lightVectorWorld1, normal);
 	brightness1 = clamp(brightness1, 0.0, 1.0);
 	float kdtemp1 = clamp(kd1, 0.0, 1.0);
 	vec4 diffuse1 = brightness1 * kdtemp1 * vec4(1.0f,0.0f,0.0f,1.0f); //red diffuse
 
-	vec3 reflectedLightVectorWorld = reflect(-lightVectorWorld, normalize(normalWorld));
+	//vec3 reflectedLightVectorWorld = reflect(-lightVectorWorld, normalize(normalWorld));
+	vec3 reflectedLightVectorWorld = reflect(-lightVectorWorld, normal);
 	vec3 eyeVectorWorld = normalize(eyePositionWorld - vertexPositionWorld);
 	float temp = dot(reflectedLightVectorWorld, eyeVectorWorld);
 	float s = clamp(temp, 0.0, 1.0);
@@ -40,7 +52,8 @@ void main()
 	vec4 specularLight =  s * kstemp * vec4(1.0f, 1.0f, 1.0f, 1.0f);
 	
 	//second light specular
-	vec3 reflectedLightVectorWorld1 = reflect(-lightVectorWorld1, normalize(normalWorld));
+	//vec3 reflectedLightVectorWorld1 = reflect(-lightVectorWorld1, normalize(normalWorld));
+	vec3 reflectedLightVectorWorld1 = reflect(-lightVectorWorld1, normal);
 	vec3 eyeVectorWorld1 = normalize(eyePositionWorld - vertexPositionWorld);
 	float temp1 = dot(reflectedLightVectorWorld1, eyeVectorWorld1);
 	float s1 = clamp(temp1, 0.0, 1.0);
