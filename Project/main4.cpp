@@ -262,17 +262,17 @@ void PassiveMouse(int x, int y)
 {
 	if (x<oldx)
 	{
-		SC_spinAngle += 1.0f;
+		SC_spinAngle += 2.0f;
 		SC_Rot_M = glm::rotate(glm::mat4(1.0f), glm::radians(SC_spinAngle), glm::vec3(0.0f, 1.0f, 0.0f));
-		Cam_spinAngle += 1.0f;
+		Cam_spinAngle += 2.0f;
 		Cam_Rot_M = glm::rotate(glm::mat4(1.0f), glm::radians(Cam_spinAngle), glm::vec3(0.0f, 1.0f, 0.0f));
 		Cam_Pt_Rot_M = glm::rotate(glm::mat4(1.0f), glm::radians(Cam_spinAngle + 45), glm::vec3(0.0f, 1.0f, 0.0f));
 	}
 	if (x>oldx)
 	{
-		SC_spinAngle -= 1.0f;
+		SC_spinAngle -= 2.0f;
 		SC_Rot_M = glm::rotate(glm::mat4(1.0f), glm::radians(SC_spinAngle), glm::vec3(0.0f, 1.0f, 0.0f));
-		Cam_spinAngle -= 1.0f;
+		Cam_spinAngle -= 2.0f;
 		Cam_Rot_M = glm::rotate(glm::mat4(1.0f), glm::radians(Cam_spinAngle), glm::vec3(0.0f, 1.0f, 0.0f));
 		Cam_Pt_Rot_M = glm::rotate(glm::mat4(1.0f), glm::radians(Cam_spinAngle + 45), glm::vec3(0.0f, 1.0f, 0.0f));
 	}
@@ -1151,7 +1151,7 @@ void paintGL(void)
 
 	glUniformMatrix4fv(modelTransformMatrixUniformLocation, 1,
 		GL_FALSE, &SC_TransformMatrix[0][0]);
-	if ((glm::distance(glm::vec3(SC_world_pos), glm::vec3(0.0f, 0.0f, -150.0f)) > 40.0f) && (glm::distance(glm::vec3(SC_world_pos), glm::vec3(0.0f, 0.0f, -150.0f)) > 40.0f)) {
+	if ((glm::distance(glm::vec3(SC_world_pos), glm::vec3(0.0f, 0.0f, -150.0f)) > 40.0f) && (glm::distance(glm::vec3(SC_world_pos), glm::vec3(-40.0f, 0.0f, 40.0f)) > 40.0f)) {
 		glDrawArrays(GL_TRIANGLES, 0, drawSize);
 	}
 
@@ -1264,7 +1264,7 @@ void paintGL(void)
 	glBindTexture(GL_TEXTURE_2D, textureT1);
 	glUniform1i(TextureID6, 8);
 
-	translationMatrix = glm::translate(glm::mat4(), glm::vec3(50.0f, 0.0f, -50.0f));
+	translationMatrix = glm::translate(glm::mat4(), glm::vec3(-40.0f, 0.0f, 40.0f));
 	scaleMatrix = glm::scale(glm::mat4(), glm::vec3(5.0f, 5.0f, 5.0f));
 	rotationxMatrix = glm::rotate(mat4(), 1.57f, vec3(1.0f, 0.0f, 0.0f));
 	rotationyMatrix = glm::rotate(mat4(), 1.57f, vec3(0.0f, 1.0f, 0.0f));
@@ -1284,7 +1284,7 @@ void paintGL(void)
 	glBindTexture(GL_TEXTURE_2D, textureT2);
 	glUniform1i(TextureID7, 4);
 
-	translationToOMatrix = glm::translate(glm::mat4(), glm::vec3(50.0f, 0.0f, -50.0f));
+	translationToOMatrix = glm::translate(glm::mat4(), glm::vec3(-40.0f, 0.0f, 40.0f));
 	rotationzMatrix = glm::rotate(mat4(), rockSpinAngle*0.01f, vec3(0.0f, 1.0f, 0.0f));
 	rockSpinAngle = rockSpinAngle + 0.1f;
 
