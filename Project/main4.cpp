@@ -28,6 +28,8 @@ GLsizei drawSize3;
 GLsizei drawSize4;
 GLsizei drawSize5;
 GLsizei drawSizeSkyBox;
+GLsizei drawSizeWP;
+GLsizei drawSizeRock;
 GLuint texture;
 GLuint texture0;
 GLuint texture1;
@@ -36,6 +38,8 @@ GLuint texture3;
 GLuint texture4;
 GLuint textureSky; //bind with texture5
 GLuint texture6;
+GLuint textureT1;
+GLuint textureT2;
 glm::vec3 SCTranslation = glm::vec3(0.0f, 0.0f, 0.0f);
 glm::vec4 SC_world_Front_Direction;
 glm::vec4 SC_world_Right_Direction;
@@ -60,6 +64,8 @@ float ks1 = 0.0;
 float ka1 = 0.0;
 int textureNum = 0;
 float angle = 0.0;
+float angleWP = 0.0f;
+float rockSpinAngle = 0.0f;
 float x_pos = 0.0;
 float y_pos = 0.0;
 int forwards = 0;
@@ -67,12 +73,14 @@ int spin = 0;
 float SC_spinAngle = -110.0f;
 float Cam_spinAngle = 25.0f;
 float planetSpinAngle = 0.0f;
-glm::vec2 mousePosition = glm::vec2(256.0,256.0);
+glm::vec2 mousePosition = glm::vec2(256.0, 256.0);
 float oldx = 256.0;
 float roll = 0.0;
 float yaw = 0.0;
 float pitch = 0.0;
 int cam = 0;
+int amount = 2000;
+float modelMatrices[2000][5];
 // Could define the Vao&Vbo and interaction parameter here
 
 
@@ -148,7 +156,7 @@ string readShaderCode(const char* fileName)
 	);
 }
 
-int installShaders(char* vertexShader, char* fragmentShader)
+int installShaders(const char* vertexShader, const char* fragmentShader)
 {
 	GLuint vertexShaderID = glCreateShader(GL_VERTEX_SHADER);
 	GLuint fragmentShaderID = glCreateShader(GL_FRAGMENT_SHADER);
@@ -226,7 +234,7 @@ void keyboard(unsigned char key, int x, int y)
 	}
 }
 
-void move(int key, int x, int y) 
+void move(int key, int x, int y)
 {
 	if (key == GLUT_KEY_DOWN)
 	{
@@ -258,7 +266,7 @@ void PassiveMouse(int x, int y)
 		SC_Rot_M = glm::rotate(glm::mat4(1.0f), glm::radians(SC_spinAngle), glm::vec3(0.0f, 1.0f, 0.0f));
 		Cam_spinAngle += 1.0f;
 		Cam_Rot_M = glm::rotate(glm::mat4(1.0f), glm::radians(Cam_spinAngle), glm::vec3(0.0f, 1.0f, 0.0f));
-		Cam_Pt_Rot_M = glm::rotate(glm::mat4(1.0f), glm::radians(Cam_spinAngle+45), glm::vec3(0.0f, 1.0f, 0.0f));
+		Cam_Pt_Rot_M = glm::rotate(glm::mat4(1.0f), glm::radians(Cam_spinAngle + 45), glm::vec3(0.0f, 1.0f, 0.0f));
 	}
 	if (x>oldx)
 	{
@@ -311,7 +319,7 @@ bool loadOBJ(
 		else if (strcmp(lineHeader, "vt") == 0) {
 			glm::vec2 uv;
 			fscanf(file, "%f %f\n", &uv.x, &uv.y);
-			uv.y = -uv.y; 
+			uv.y = -uv.y;
 			temp_uvs.push_back(uv);
 		}
 		else if (strcmp(lineHeader, "vn") == 0) {
@@ -397,14 +405,14 @@ GLuint loadBMP_custom(const char * imagepath) {
 	imageSize = *(int*)&(header[0x22]);
 	width = *(int*)&(header[0x12]);
 	height = *(int*)&(header[0x16]);
-	if (imageSize == 0)    imageSize = width*height * 3; 
-	if (dataPos == 0)      dataPos = 54; 
+	if (imageSize == 0)    imageSize = width * height * 3;
+	if (dataPos == 0)      dataPos = 54;
 
 	data = new unsigned char[imageSize];
 	fread(data, 1, imageSize, file);
 	fclose(file);
 
-	
+
 	GLuint textureID;
 	//TODO: Create one OpenGL texture and set the texture parameter 
 	glGenTextures(1, &textureID);
@@ -422,8 +430,8 @@ GLuint loadBMP_custom(const char * imagepath) {
 	glGenerateMipmap(GL_TEXTURE_2D);
 	// OpenGL has now copied the data. Free our own version
 	delete[] data;
-	
-	
+
+
 	return textureID;
 }
 
@@ -462,7 +470,7 @@ GLuint loadCubemap(vector<const GLchar*> faces) {
 		imageSize = *(int*)&(header[0x22]);
 		width = *(int*)&(header[0x12]);
 		height = *(int*)&(header[0x16]);
-		if (imageSize == 0) imageSize = width*height * 3;
+		if (imageSize == 0) imageSize = width * height * 3;
 		if (dataPos == 0) dataPos = 54;
 
 		data = new unsigned char[imageSize];
@@ -551,7 +559,7 @@ void sendDataToOpenGL()
 
 	//end of skybox
 
-	
+
 	//space craft model
 	std::vector<glm::vec3> vertices;
 	std::vector<glm::vec2> uvs;
@@ -564,12 +572,14 @@ void sendDataToOpenGL()
 	texture3 = loadBMP_custom("theme3.bmp");
 	texture4 = loadBMP_custom("block_texture.bmp");
 	texture6 = loadBMP_custom("Green.bmp");
-	glGenVertexArrays(5, vao);
-	GLuint vbo[15];
-	glGenBuffers(15, vbo);
+	textureT1 = loadBMP_custom("texture/WonderStarTexture.bmp");
+	textureT2 = loadBMP_custom("texture/RockTexture.bmp");
+	glGenVertexArrays(7, vao);
+	GLuint vbo[21];
+	glGenBuffers(21, vbo);
 
 
-	glBindVertexArray(vao[0]); 
+	glBindVertexArray(vao[0]);
 
 
 	glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
@@ -600,7 +610,7 @@ void sendDataToOpenGL()
 		0, // stride
 		(void*)0 // array buffer offset
 	);
-	
+
 	//vbo[2] for normal
 	glBindBuffer(GL_ARRAY_BUFFER, vbo[2]);
 	glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(glm::vec3),
@@ -617,7 +627,7 @@ void sendDataToOpenGL()
 
 	drawSize = vertices.size();
 
-	
+
 
 	//first ring
 	std::vector<glm::vec3> vertices2;
@@ -780,7 +790,7 @@ void sendDataToOpenGL()
 	std::vector<glm::vec2> uvs5;
 	std::vector<glm::vec3> normals5;
 	bool res5 = loadOBJ("planet.obj", vertices5, uvs5, normals5);
-	
+
 	glBindVertexArray(vao[4]);  //VAO for Earth model
 
 	glBindBuffer(GL_ARRAY_BUFFER, vbo[12]);
@@ -826,6 +836,87 @@ void sendDataToOpenGL()
 		(void*)0 // array buffer offset
 	);
 	drawSize5 = vertices5.size();
+
+
+	// wonder planet
+	std::vector<glm::vec3> Pvertices;
+	std::vector<glm::vec2> Puvs;
+	std::vector<glm::vec3> Pnormals;
+	bool resP = loadOBJ("planet.obj", Pvertices, Puvs, Pnormals);
+
+	glBindVertexArray(vao[5]);  //VAO for Wonder Planet model
+
+	glBindBuffer(GL_ARRAY_BUFFER, vbo[15]);
+	glBufferData(GL_ARRAY_BUFFER, Pvertices.size() * sizeof(glm::vec3),
+		&Pvertices[0], GL_STATIC_DRAW);
+	//vbo for vertices
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(
+		0, // attribute
+		3, // size
+		GL_FLOAT, // type
+		GL_FALSE, // normalized?
+		0, // stride
+		(void*)0 // array buffer offset
+	);
+
+
+	//vbo for uv
+	glBindBuffer(GL_ARRAY_BUFFER, vbo[16]);
+	glBufferData(GL_ARRAY_BUFFER, Puvs.size() * sizeof(glm::vec2), &Puvs[0],
+		GL_STATIC_DRAW);
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(
+		1, // attribute
+		2, // size
+		GL_FLOAT, // type
+		GL_FALSE, // normalized?
+		0, // stride
+		(void*)0 // array buffer offset
+	);
+
+	//for normal
+	glBindBuffer(GL_ARRAY_BUFFER, vbo[17]);
+	glBufferData(GL_ARRAY_BUFFER, Pnormals.size() * sizeof(glm::vec3),
+		&Pnormals[0], GL_STATIC_DRAW);
+	glEnableVertexAttribArray(2);
+	glVertexAttribPointer(
+		2, // attribute
+		3, // size
+		GL_FLOAT, // type
+		GL_FALSE, // normalized?
+		0, // stride
+		(void*)0 // array buffer offset
+	);
+	drawSizeWP = Pvertices.size();
+
+	//Rock
+	std::vector<glm::vec3> Rvertices;
+	std::vector<glm::vec2> Ruvs;
+	std::vector<glm::vec3> Rnormals;
+	bool resR = loadOBJ("rock.obj", Rvertices, Ruvs, Rnormals);
+	glBindVertexArray(vao[6]);
+
+
+	glBindBuffer(GL_ARRAY_BUFFER, vbo[18]);
+	glBufferData(GL_ARRAY_BUFFER, Rvertices.size() * sizeof(glm::vec3), &Rvertices[0], GL_STATIC_DRAW);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+
+
+	glBindBuffer(GL_ARRAY_BUFFER, vbo[19]);
+	glBufferData(GL_ARRAY_BUFFER, Ruvs.size() * sizeof(glm::vec2), &Ruvs[0], GL_STATIC_DRAW);
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
+
+
+	glBindBuffer(GL_ARRAY_BUFFER, vbo[20]);
+	glBufferData(GL_ARRAY_BUFFER, Rnormals.size() * sizeof(glm::vec3), &Rnormals[0], GL_STATIC_DRAW);
+	glEnableVertexAttribArray(2);
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+
+	drawSizeRock = Rvertices.size();
+
 }
 
 void UpdateStatus() {
@@ -857,9 +948,9 @@ void UpdateStatus() {
 		glm::vec3(SC_trans_M[3].x, SC_trans_M[3].y, SC_trans_M[3].z)
 	);
 	//printf("%f, %f, %f, %f\n", Camera_trans_M[3].x, Camera_trans_M[3].y, Camera_trans_M[3].z, Camera_trans_M[3].w);
-	SC_TransformMatrix = SC_trans_M*SC_Rot_M*SC_scale_M;
-	Camera_TransformMatrix = Camera_trans_M2*Cam_Rot_M*Camera_trans_M1;
-	Cam_point_pos = Camera_point_M2*Cam_Pt_Rot_M*Camera_point_M1 * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+	SC_TransformMatrix = SC_trans_M * SC_Rot_M*SC_scale_M;
+	Camera_TransformMatrix = Camera_trans_M2 * Cam_Rot_M*Camera_trans_M1;
+	Cam_point_pos = Camera_point_M2 * Cam_Pt_Rot_M*Camera_point_M1 * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 	//printf("%f, %f, %f\n", Cam_point_pos.x, Cam_point_pos.y, Cam_point_pos.z);
 	SC_world_pos = SC_trans_M * glm::vec4(SC_local_pos, 1.0f);
 	SC_world_Front_Direction = SC_TransformMatrix * glm::vec4(SC_local_front, 0.0f);
@@ -869,6 +960,38 @@ void UpdateStatus() {
 	Camera_world_position = Camera_TransformMatrix * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 	//printf("%f, %f, %f\n", Camera_world_position.x, Camera_world_position.y, Camera_world_position.z);
 	//camera
+}
+
+void CreateRand_ModelM() {
+
+	srand(glutGet(GLUT_ELAPSED_TIME));
+	float radius = 6.0f;
+	float offset = 0.4f;
+	float displacement;
+	for (int i = 0; i < amount; i++) {
+
+		float angle = (float)i / (float)amount * 360.0f;
+		displacement = (rand() % (int)(2 * offset * 200)) / 100.0f - offset;
+		float x = sin(angle)*radius + displacement;
+		displacement = (rand() % (int)(2 * offset * 200)) / 100.0f - offset;
+		float y = displacement * 0.4f + 1;
+		displacement = (rand() % (int)(2 * offset * 200)) / 100.0f - offset;
+		float z = cos(angle) * radius + displacement;
+
+		modelMatrices[i][0] = x * 5.0f;
+		modelMatrices[i][1] = (y - 1.0f)*5.0f;
+		modelMatrices[i][2] = z * 5.0f;
+		float scale = (rand() % 10) / 100.0f + 0.05f;
+		modelMatrices[i][3] = scale;
+		float rotAngle = (rand() % 360);
+		modelMatrices[i][4] = rotAngle;
+
+	}
+	for (int i = 0; i < 200; i++) {
+		printf("%lf,%lf,%lf,%lf\n", modelMatrices[i][4], modelMatrices[i][1], modelMatrices[i][2], modelMatrices[i][3]);
+	}
+
+
 }
 
 
@@ -883,7 +1006,7 @@ void paintGL(void)
 	mat4 viewMatrix = glm::lookAt(glm::vec3(Camera_world_position), glm::vec3(Cam_point_pos), glm::vec3(0.0f, 1.0f, 0.0f));
 	mat4 projectionMatrix = glm::perspective(20.0f, 1.0f, 1.0f, 200.0f);
 	glUseProgram(skyboxProgram); //configure skybox using the skybox program
-	
+
 
 	glm::mat4 Skb_ModelMatrix = glm::mat4(1.0f);
 	Skb_ModelMatrix = glm::scale(Skb_ModelMatrix, vec3(100.0f));
@@ -915,7 +1038,7 @@ void paintGL(void)
 	glm::mat4 matPitch = glm::mat4(1.0f);//identity matrix
 	glm::mat4 matYaw = glm::mat4(1.0f);//identity matrix
 
-	//roll, pitch and yaw are used to store our angles in our class
+									   //roll, pitch and yaw are used to store our angles in our class
 	matRoll = glm::rotate(matRoll, roll, glm::vec3(0.0f, 0.0f, 1.0f));
 	matPitch = glm::rotate(matPitch, pitch, glm::vec3(1.0f, 0.0f, 0.0f));
 	matYaw = glm::rotate(matYaw, yaw, glm::vec3(0.0f, 1.0f, 0.0f));
@@ -932,7 +1055,7 @@ void paintGL(void)
 	GLint projectionMatrixUniformLocation = glGetUniformLocation(programID, "projectionMatrix");
 	glUniformMatrix4fv(projectionMatrixUniformLocation, 1, GL_FALSE, &combinedMatrix[0][0]); //set projection view
 
-	//first light source
+																							 //first light source
 	GLint ambientLightUniformLocation = glGetUniformLocation(programID, "ambientLight"); //ambient light
 	vec3 ambientLight(1.0f, 1.0f, 1.0f);
 	glUniform3fv(ambientLightUniformLocation, 1, &ambientLight[0]);
@@ -947,7 +1070,7 @@ void paintGL(void)
 	vec3 lightPosition;
 	lightPosition = vec3(60.0f, 0.0f, 60.0f);
 	glUniform3fv(lightPositionUniformLocation, 1, &lightPosition[0]);
-	
+
 	//second light source
 	GLint lightPositionUniformLocation1 = glGetUniformLocation(programID, "lightPositionWorld1"); //diffuse light
 	vec3 lightPosition1;
@@ -992,6 +1115,12 @@ void paintGL(void)
 	glm::vec4 forwardVector = glm::vec4(1.0f);
 	glm::mat4 forwardMatrix = glm::mat4(1.0f);
 	glm::vec4 finalVector = glm::vec4(1.0f);
+	glm::mat4 rotationxMatrix = glm::mat4(1.0f);
+	glm::mat4 rotationyMatrix = glm::mat4(1.0f);
+	glm::mat4 rotationzMatrix = glm::mat4(1.0f);
+	glm::mat4 rotationStepMatrix = glm::mat4(1.0f);
+	glm::mat4 translationFromOMatrix = glm::mat4(1.0f);
+	glm::mat4 translationToOMatrix = glm::mat4(1.0f);
 
 	GLint modelTransformMatrixUniformLocation =
 		glGetUniformLocation(programID, "modelTransformMatrix"); //get location of transform matrix
@@ -1004,7 +1133,7 @@ void paintGL(void)
 	//Bind different textures
 
 	glBindVertexArray(vao[0]);
-	
+
 	GLuint TextureID = glGetUniformLocation(programID, "myTextureSampler"); //texture handling
 	if ((glm::distance(glm::vec3(SC_world_pos), glm::vec3(0.0f, 0.0f, 0.0f)) < 10.0f) || (glm::distance(glm::vec3(SC_world_pos), glm::vec3(0.0f, 0.0f, -30.0f)) < 10.0f) || (glm::distance(glm::vec3(SC_world_pos), glm::vec3(0.0f, 0.0f, -60.0f)) < 10.0f)) {
 		glActiveTexture(GL_TEXTURE6);
@@ -1016,10 +1145,10 @@ void paintGL(void)
 		glBindTexture(GL_TEXTURE_2D, texture);
 		glUniform1i(TextureID, 0);
 	}
-	
+
 
 	UpdateStatus();//update the transform matrix of space craft
-	
+
 	glUniformMatrix4fv(modelTransformMatrixUniformLocation, 1,
 		GL_FALSE, &SC_TransformMatrix[0][0]);
 	if ((glm::distance(glm::vec3(SC_world_pos), glm::vec3(0.0f, 0.0f, -150.0f)) > 40.0f)) {
@@ -1114,7 +1243,7 @@ void paintGL(void)
 	glActiveTexture(GL_TEXTURE3);
 	glBindTexture(GL_TEXTURE_2D, texture2);
 	glUniform1i(TextureID5, 3);
-	
+
 	translationMatrix = glm::translate(glm::mat4(),
 		glm::vec3(0.0f, 0.0f, -150.0f));;
 	rotationMatrix2 = glm::rotate(mat4(), glm::radians(planetSpinAngle), vec3(0, 1, 0));
@@ -1124,7 +1253,54 @@ void paintGL(void)
 		GL_FALSE, &modelTransformMatrix[0][0]);
 	glDrawArrays(GL_TRIANGLES, 0, drawSize5);
 	planetSpinAngle += 0.005f;
-	
+
+
+	//drawing wonder planet
+	glBindVertexArray(vao[5]);
+	GLuint TextureID6 = glGetUniformLocation(programID, "myTextureSampler");
+	glActiveTexture(GL_TEXTURE8);
+	glBindTexture(GL_TEXTURE_2D, textureT1);
+	glUniform1i(TextureID6, 8);
+
+	translationMatrix = glm::translate(glm::mat4(), glm::vec3(50.0f, 0.0f, -50.0f));
+	scaleMatrix = glm::scale(glm::mat4(), glm::vec3(5.0f, 5.0f, 5.0f));
+	rotationxMatrix = glm::rotate(mat4(), 1.57f, vec3(1.0f, 0.0f, 0.0f));
+	rotationyMatrix = glm::rotate(mat4(), 1.57f, vec3(0.0f, 1.0f, 0.0f));
+	rotationzMatrix = glm::rotate(mat4(), 1.57f, vec3(0.0f, 0.0f, 1.0f));
+	rotationStepMatrix = glm::rotate(mat4(), angleWP*0.01745f, vec3(0.0f, 0.0f, 1.0f));
+	angleWP = angleWP - 0.05f;
+	modelTransformMatrix = translationMatrix * rotationxMatrix*rotationStepMatrix*scaleMatrix;
+	//modelTransformMatrixUniformLocation = glGetUniformLocation(programID, "modelTransformMatrix");
+	glUniformMatrix4fv(modelTransformMatrixUniformLocation, 1, GL_FALSE, &modelTransformMatrix[0][0]);
+	glDrawArrays(GL_TRIANGLES, 0, drawSizeWP);
+
+
+	//drawing rocks
+
+	GLuint TextureID7 = glGetUniformLocation(programID, "myTextureSampler");
+	glActiveTexture(GL_TEXTURE4);
+	glBindTexture(GL_TEXTURE_2D, textureT2);
+	glUniform1i(TextureID7, 4);
+
+	translationToOMatrix = glm::translate(glm::mat4(), glm::vec3(50.0f, 0.0f, -50.0f));
+	rotationzMatrix = glm::rotate(mat4(), rockSpinAngle*0.01f, vec3(0.0f, 1.0f, 0.0f));
+	rockSpinAngle = rockSpinAngle + 0.1f;
+
+	for (int i = 0; i < amount; i++) {
+		glBindVertexArray(vao[6]);
+		translationFromOMatrix = glm::translate(glm::mat4(), glm::vec3(modelMatrices[i][0], modelMatrices[i][1], modelMatrices[i][2]));
+		scaleMatrix = glm::scale(glm::mat4(), glm::vec3(modelMatrices[i][3]));
+		rotationMatrix = glm::rotate(glm::mat4(), modelMatrices[i][4], glm::vec3(0.4f, 0.6f, 0.8f));
+		modelTransformMatrix = translationToOMatrix * rotationzMatrix * translationFromOMatrix * rotationMatrix * scaleMatrix;
+		glUniformMatrix4fv(modelTransformMatrixUniformLocation, 1, GL_FALSE, &modelTransformMatrix[0][0]);
+		glDrawArrays(GL_TRIANGLES, 0, drawSizeRock);
+	}
+
+
+
+
+
+
 	glFlush();
 	glutPostRedisplay();
 }
@@ -1142,18 +1318,18 @@ int main(int argc, char *argv[])
 	glutInit(&argc, argv);
 	glutInitWindowSize(1080, 720);
 	glutCreateWindow("Assignment 2");
-	
+	CreateRand_ModelM();
 	//TODO:
 	/*Register different CALLBACK function for GLUT to response
 	with different events, e.g. window sizing, mouse click or
 	keyboard stroke */
 	initializedGL();
 	glutDisplayFunc(paintGL);
-	
+
 	glutKeyboardFunc(keyboard);
 	glutSpecialFunc(move);
 	glutPassiveMotionFunc(PassiveMouse);
-	
+
 	glutMainLoop();
 
 	return 0;
